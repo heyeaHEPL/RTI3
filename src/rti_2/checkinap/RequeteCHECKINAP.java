@@ -5,7 +5,7 @@
  */
 package rti_2.checkinap;
 
-import rti_2.checkcarp.Serveur_Card;
+import rti_2.checkcarp.Serveur_Carte;
 import rti_2.database.facility.MyInstruction;
 import java.io.IOException;
 import java.io.ObjectInputStream;
