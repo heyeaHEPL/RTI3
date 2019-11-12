@@ -248,7 +248,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
                     .addComponent(TFPassagersBook, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(BDemander)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(85, Short.MAX_VALUE))
         );
 
         jLabel5.setText("Conducteur :");
@@ -344,14 +344,10 @@ public class Applic_Checkin extends javax.swing.JFrame {
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(PanelLogin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(PanelBook, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(18, 18, 18)
-                                .addComponent(PanelBuy, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(PanelCommandes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(21, 21, 21))))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(PanelBuy, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(PanelCommandes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(LReponse)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -366,7 +362,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
                         .addGap(25, 25, 25)
                         .addComponent(PanelLogin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(14, 14, 14)
+                        .addContainerGap()
                         .addComponent(PanelCommandes, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(31, 31, 31)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -504,7 +500,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
         try
         {
             oos = new ObjectOutputStream(cliSocket.getOutputStream());
-            oos.writeObject(req); oos.flush();
+            oos.writeObject(req);// oos.flush();
         }
         catch (IOException e)
         { System.err.println("Erreur réseau ? [" + e.getMessage() + "]"); }
@@ -538,15 +534,16 @@ public class Applic_Checkin extends javax.swing.JFrame {
 
     private void RequeteBooking() {
         //if(PanelBuy.isVisible())
-        PanelCommandes.setVisible(false);
-        PanelCommandes.setVisible(true);
+        
+        //PanelCommandes.setVisible(true);
         PanelBuy.setVisible(false);
+        this.pack();
         PanelBook.setVisible(true);
         this.pack();
     }
     private void Booking()
     {
-        Connecter();
+        //Connecter();
         String chargeUtile = TFCode.getText();// + "#" + TFPassagersBook.getText();
         
         RequeteCHECKINAP req = null; 
@@ -629,7 +626,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
     }
 
     private void Buy() {
-        Connecter();
+        //Connecter();
         String chargeUtile = TFConducteur.getText() + "#" + TFImmatriculation.getText() + "#" + TFPassagersBuy.getText() + "#" + TFCarte.getText();
         ReponseCHECKINAP rep = null;
         
@@ -654,7 +651,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
         try
         {
             oos = new ObjectOutputStream(cliSocket.getOutputStream());
-            oos.writeObject(req); oos.flush();
+            oos.writeObject(req); //oos.flush();
         }
         catch (IOException e)
         { System.err.println("Erreur réseau ? [" + e.getMessage() + "]"); }

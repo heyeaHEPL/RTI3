@@ -6,6 +6,7 @@
 package rti_2;
 
 import rti_2.client.Connexion;
+import rti_2.serveur.Serveur_Compagnie;
 
 /**
  *
@@ -18,6 +19,11 @@ public class RTI_2 {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+        Serveur_Compagnie serv = new Serveur_Compagnie();
+        serv.setLocation(800, 200);
+        serv.setVisible(true);
+        
+        
         Connexion connect = new Connexion();
         connect.setLocation(200, 200);
         connect.setVisible(true);

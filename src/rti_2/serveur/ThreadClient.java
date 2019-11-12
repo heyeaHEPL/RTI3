@@ -3,77 +3,83 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package rti_2.checkinap;
+package rti_2.serveur;
 
-import rti_2.checkcarp.Serveur_Carte;
+import rti_2.checkinap.ReponseCHECKINAP;
+import rti_2.checkinap.RequeteCHECKINAP;
+import static rti_2.checkinap.RequeteCHECKINAP.BOOKING;
+import static rti_2.checkinap.RequeteCHECKINAP.BUY;
+import static rti_2.checkinap.RequeteCHECKINAP.CLOSE;
+import static rti_2.checkinap.RequeteCHECKINAP.tableLogin;
 import rti_2.database.facility.MyInstruction;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
-import java.util.Hashtable;
 import java.util.StringTokenizer;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import rti_2.checkinap.requetereponse.ConsoleServeur;
-import rti_2.checkinap.requetereponse.Requete;
 
 /**
  *
  * @author fredm
  */
-public class RequeteCHECKINAP implements Requete, Serializable{
-    public static int LOGIN = 1;
-    public static int BOOKING = 2;
-    public static int BUY = 3;
-    public static int CLOSE = 4;
-    public static int REQUEST_E_MAIL = 10;
-    public static int REQUEST_TEMPORARY_KEY = 20;
-    public static int IS_CARTE_VALIDE = 5;
-    public static Hashtable tableLogin = new Hashtable();
-    static
-    {
-        tableLogin.put("heyea", "azerty159");
-        tableLogin.put("marcotty", "admin");
-        tableLogin.put("a", "b"); //debug
-    }
-   
-    public int type;
+public class ThreadClient extends Thread {
+    private SourceTaches tachesAExecuter;
+    private String nom;
+    private Socket CSocket;
+    private Runnable tacheEnCours;
     private String chargeUtile;
-    private Socket socketClient;
     private Socket socketServeurCard;
+    private ConsoleServeur cs;
     
-    public RequeteCHECKINAP(int t, String chu)
+    public ThreadClient(SourceTaches st, String n, ConsoleServeur cse)
     {
-        type = t; setChargeUtile(chu);
+        tachesAExecuter = st;
+        nom = n;
+        cs = cse;
     }
-    public RequeteCHECKINAP(int t, String chu, Socket s)
+    
+    public void run()
     {
-        type = t; setChargeUtile(chu); socketClient =s;
-    }/*
-    public Runnable createRunnable (final Socket s, final ConsoleServeur cs)
-    {
-        return new Runnable()
+        while(!isInterrupted())
         {
-            public void run()
+            try
             {
-                traiteRequeteLogin(s, cs);
-                while(true)
-                {
-                    TraiterRequete(s, cs);
-                }
+                System.out.println("Thread client avant get");
+                tacheEnCours = tachesAExecuter.getTache();
+                //CSocket = tachesAExecuter.getSocket();
+                System.out.println("Socket client :" + CSocket);
             }
-        };
+            catch(InterruptedException e)
+            {
+                System.out.println("Interruption : " + e.getMessage());
+            }
+            System.out.println("run de taches en cours");
+            tacheEnCours.run();
+            
+            //attente autre requetes
+            TraiterRequete(CSocket, cs);
+        }
     }
     private void TraiterRequete(Socket s, ConsoleServeur cs) {
         RequeteCHECKINAP req = null;
         req = RecevoirRequete(s);
+        Runnable travail = req.createRunnable(CSocket, cs);
+        if(travail != null)
+        {
+            //tachesAExecuter.setSocket(CSocket);
+            //System.out.println("affectation socket" + CSocket);
+            tachesAExecuter.recordTache(travail);
+                
+            System.out.println("Travail mis dans la file");
+        }
+        else
+            System.out.println("Pas de mise en file");
+        
         if(req.type == BOOKING)
         {
             traiteRequeteBooking(s, cs);
@@ -86,50 +92,13 @@ public class RequeteCHECKINAP implements Requete, Serializable{
         {
             traiteRequeteClose(s, cs);
         }
-    }*/
-    
-    public Runnable createRunnable (final Socket s, final ConsoleServeur cs)
-    {
-        //attente de la requete suivante
-        if (type==LOGIN)
-            return new Runnable()
-            {
-                public void run()
-                {
-                    traiteRequeteLogin(s, cs);
-                }
-            };
-        else if (type==BOOKING)
-            return new Runnable()
-            {
-                public void run()
-                {
-                    traiteRequeteBooking(s, cs);
-                }
-            };
-        else if (type==BUY)
-            return new Runnable()
-            {
-                public void run()
-                {
-                    traiteRequeteBuy(s, cs);
-                }
-            };
-        else if (type==CLOSE)
-            return new Runnable()
-            {
-                public void run()
-                {
-                    traiteRequeteClose(s, cs);
-                }
-            };
-        else return null;
-        
     }
+    
     
     
     private synchronized void traiteRequeteBooking(Socket s, ConsoleServeur cs)
     {
+        System.out.println("Socket client book :" + CSocket);
         System.out.println("Charge utile recue : " + chargeUtile);
         cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#BOOKING" + "#Thread");
         Vector infos = new Vector();
@@ -264,7 +233,7 @@ public class RequeteCHECKINAP implements Requete, Serializable{
         try
         {
         oos = new ObjectOutputStream(s.getOutputStream());
-        oos.writeObject(rep); //oos.flush();
+        oos.writeObject(rep); oos.flush();
         oos.close();
         }
         catch (IOException e)
@@ -307,7 +276,7 @@ public class RequeteCHECKINAP implements Requete, Serializable{
         try
         {
         oos = new ObjectOutputStream(s.getOutputStream());
-        oos.writeObject(rep); //oos.flush();
+        oos.writeObject(rep);// oos.flush();
         //oos.close();
         }
         catch (IOException e)
