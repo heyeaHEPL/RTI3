@@ -160,9 +160,12 @@ public class Connexion extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
     private void ConnexionServer() {
+        
+        
         ois=null; oos=null; cliSock=null;
         String adresse = TFAdresseServeur.getText();
         int port = Integer.parseInt(TFPortServeur.getText());
+        //cliSocket = ConnexionClient(adresse, port);
         boolean erreur = false;
         
         try
@@ -183,7 +186,6 @@ public class Connexion extends javax.swing.JFrame {
         {
             Applic_Checkin app = new Applic_Checkin(cliSock, adresse, port);
             app.setVisible(true);
-        
             this.dispose();
         }
         //erreur = false;

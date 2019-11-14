@@ -14,6 +14,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import static rti_2.network.NetworkLibrary.EnvoyerRequete;
+import static rti_2.network.NetworkLibrary.RecevoirReponse;
 
 /**
  *
@@ -493,33 +495,13 @@ public class Applic_Checkin extends javax.swing.JFrame {
         // Construction de la requête
         String chargeUtile = user;
         chargeUtile = chargeUtile + "#" + password;
-        RequeteCHECKINAP req = null; 
-        req = new RequeteCHECKINAP(RequeteCHECKINAP.LOGIN, chargeUtile);
-        //EnvoyerRequete(RequeteCHECKINAP.LOGIN, chargeUtile);
-        // Envoi de la requête
-        System.out.println("CLIENT | Envoi Login");
-        try
-        {
-            oos = new ObjectOutputStream(cliSocket.getOutputStream());
-            oos.writeObject(req);// oos.flush();
-        }
-        catch (IOException e)
-        { System.err.println("Erreur réseau ? [" + e.getMessage() + "]"); }
-        // Lecture de la réponse
-        //rep = RecevoirReponse();
-        ReponseCHECKINAP rep = null;
-        try
-        {
-            ois = new ObjectInputStream(cliSocket.getInputStream());
-            rep = (ReponseCHECKINAP)ois.readObject();
-            System.out.println(" *** Reponse reçue : " + rep.getChargeUtile());
-        }
-        catch (ClassNotFoundException e)
-        { System.out.println("--- erreur sur la classe = " + e.getMessage()); }
-        catch (IOException e)
-        { System.out.println("--- erreur IO = " + e.getMessage()); }
         
-        //LReponse.setText(rep.getChargeUtile()); 
+        System.out.println("CLIENT | Envoi requete Login");
+        EnvoyerRequete(cliSocket, RequeteCHECKINAP.LOGIN, chargeUtile);
+        
+        ReponseCHECKINAP rep = null;
+        System.out.println("ClIENT | Reception reponse Login");
+        rep = RecevoirReponse(cliSocket);
         
         if(rep.GetCode() == LOGIN_OK)
         {
@@ -531,49 +513,25 @@ public class Applic_Checkin extends javax.swing.JFrame {
         }
         else
         {
-            System.out.println("Login not ok !");
+            System.out.println("Login refusé !");
         }
     }
 
     private void RequeteBooking() {
-        //if(PanelBuy.isVisible())
-        
-        //PanelCommandes.setVisible(true);
         PanelBuy.setVisible(false);
-        this.pack();
         PanelBook.setVisible(true);
         this.pack();
     }
     private void Booking()
     {
-        //Connecter();
+        //construction requete
         String chargeUtile = TFCode.getText();// + "#" + TFPassagersBook.getText();
-        //Envoyer(RequeteCHECKINAP.BOOKING, chargeUtile);
-        RequeteCHECKINAP req = null; 
-        req = new RequeteCHECKINAP(RequeteCHECKINAP.BOOKING, chargeUtile);
-        System.out.println(" Try envoi requete bokk ");
         // Envoi de la requête
-        try
-        {
-            oos = new ObjectOutputStream(cliSocket.getOutputStream());
-            oos.writeObject(req); //oos.flush();
-        }
-        catch (IOException e)
-        { System.err.println("Erreur réseau ? [" + e.getMessage() + "]"); }
-        // Lecture de la réponse
-        System.out.println(" *** Requete envoyee :" + req.getChargeUtile());
+        System.out.println("CLIENT | Envoi requete booking");
+        EnvoyerRequete(cliSocket, RequeteCHECKINAP.BOOKING, chargeUtile);
+        
         ReponseCHECKINAP rep = null;
-        try
-        {
-            ois = new ObjectInputStream(cliSocket.getInputStream());
-            rep = (ReponseCHECKINAP)ois.readObject();
-            System.out.println(" *** Reponse reçue : " + rep.getChargeUtile());
-        }
-        catch (ClassNotFoundException e)
-        { System.out.println("--- erreur sur la classe = " + e.getMessage()); }
-        catch (IOException e)
-        { System.out.println("--- erreur IO = " + e.getMessage()); }
-        LReponse.setText(rep.getChargeUtile()); 
+        rep = RecevoirReponse(cliSocket);
         
         if(rep.GetCode() == ReponseCHECKINAP.BOOKING_OK)
         {
@@ -585,56 +543,20 @@ public class Applic_Checkin extends javax.swing.JFrame {
             LReponse.setText("Réservation échouée !");
         }
     }
+    
     private void RequeteBuy() {
        // if(PanelBook.isVisible())
         PanelBook.setVisible(false);
         PanelBuy.setVisible(true);
         this.pack();
     }
-
-    private void RequeteClose() {
-        //Connecter();
-        
-        String chargeUtile = "";
-        ReponseCHECKINAP rep = null;
-        
-        Envoyer(RequeteCHECKINAP.CLOSE, chargeUtile);
-        rep = Recevoir();
-        
-        if(rep.GetCode() == ReponseCHECKINAP.CLOSE_OK)
-        {
-            LReponse.setText("Close réussi !");
-            this.dispose();
-        }
-        else
-        {
-            LReponse.setText("Close échoué !");
-        }
-    }
-    private void Connecter()
-    {
-        try
-        {
-            cliSocket = new Socket(adresse, port);
-            System.out.println(cliSocket.getInetAddress().toString());
-        }
-        catch (UnknownHostException e)
-        { System.err.println("Erreur ! Host non trouvé [" + e + "]");
-            LReponse.setText("Host non trouvé !\n");
-        }
-        catch (IOException e)
-        { System.err.println("Erreur ! Pas de connexion ? [" + e + "]");
-            LReponse.setText("Erreur ! Pas de connexion ?\n");
-        } 
-    }
-
     private void Buy() {
-        //Connecter();
+        
         String chargeUtile = TFConducteur.getText() + "#" + TFImmatriculation.getText() + "#" + TFPassagersBuy.getText() + "#" + TFCarte.getText();
-        Envoyer(RequeteCHECKINAP.BUY, chargeUtile);
+        EnvoyerRequete(cliSocket, RequeteCHECKINAP.BUY, chargeUtile);
         
         ReponseCHECKINAP rep = null;
-        rep = Recevoir();
+        rep = RecevoirReponse(cliSocket);
         
         if(rep.GetCode() == ReponseCHECKINAP.BUY_OK)
         {
@@ -645,36 +567,22 @@ public class Applic_Checkin extends javax.swing.JFrame {
             LReponse.setText("Achat échoué !");
         }
     }
-
-    private void Envoyer(int code, String chargeUtile) {
-        RequeteCHECKINAP req = null; 
-        req = new RequeteCHECKINAP(code, chargeUtile);
+    private void RequeteClose() {
         
-        // Envoi de la requête
-        try
-        {
-            oos = new ObjectOutputStream(cliSocket.getOutputStream());
-            oos.writeObject(req); //oos.flush();
-        }
-        catch (IOException e)
-        { System.err.println("Erreur réseau ? [" + e.getMessage() + "]"); }
-        
-    }
-
-    private ReponseCHECKINAP Recevoir() {
-        // Lecture de la réponse
+        String chargeUtile = "";
         ReponseCHECKINAP rep = null;
-        try
+        
+        EnvoyerRequete(cliSocket, RequeteCHECKINAP.CLOSE, chargeUtile);
+        rep = RecevoirReponse(cliSocket);
+        
+        if(rep.GetCode() == ReponseCHECKINAP.CLOSE_OK)
         {
-            ois = new ObjectInputStream(cliSocket.getInputStream());
-            rep = (ReponseCHECKINAP)ois.readObject();
-            System.out.println(" *** Reponse reçue : " + rep.getChargeUtile());
+            LReponse.setText("Close réussi !");
+            this.dispose();
         }
-        catch (ClassNotFoundException e)
-        { System.out.println("--- erreur sur la classe = " + e.getMessage()); }
-        catch (IOException e)
-        { System.out.println("--- erreur IO = " + e.getMessage()); }
-        LReponse.setText(rep.getChargeUtile());
-        return rep;
+        else
+        {
+            LReponse.setText("Close échoué !");
+        }
     }
 }
