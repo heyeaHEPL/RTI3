@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import javax.swing.JOptionPane;
+import static rti_2.checkinap.RequeteCHECKINAP.LOGIN;
 import rti_2.checkinap.requetereponse.ConsoleServeur;
 
 /**
@@ -35,12 +36,13 @@ public class ThreadClient extends Thread {
     private String chargeUtile;
     private Socket socketServeurCard;
     private ConsoleServeur cs;
-    
+    private ListeTaches listTaches;
     public ThreadClient(SourceTaches st, String n, ConsoleServeur cse)
     {
         tachesAExecuter = st;
         nom = n;
         cs = cse;
+        listTaches = (ListeTaches) st;
     }
     
     public void run()
@@ -49,17 +51,17 @@ public class ThreadClient extends Thread {
         {
             try
             {
-                System.out.println("Thread client avant get");
-                tacheEnCours = tachesAExecuter.getTache();
-                //CSocket = tachesAExecuter.getSocket();
-                System.out.println("Socket client :" + CSocket);
+                System.out.println("Thread client avant getSocket");
+                //tacheEnCours = tachesAExecuter.getTache();
+                CSocket = listTaches.getSocket();
+                System.out.println("Socket client recue :" + CSocket);
             }
             catch(InterruptedException e)
             {
                 System.out.println("Interruption : " + e.getMessage());
             }
-            System.out.println("run de taches en cours");
-            tacheEnCours.run();
+            System.out.println("TraiterRequete");
+            //acheEnCours.run();
             
             //attente autre requetes
             TraiterRequete(CSocket, cs);
@@ -68,7 +70,7 @@ public class ThreadClient extends Thread {
     private void TraiterRequete(Socket s, ConsoleServeur cs) {
         RequeteCHECKINAP req = null;
         req = RecevoirRequete(s);
-        Runnable travail = req.createRunnable(CSocket, cs);
+        /*Runnable travail = req.createRunnable(CSocket, cs);
         if(travail != null)
         {
             //tachesAExecuter.setSocket(CSocket);
@@ -79,8 +81,12 @@ public class ThreadClient extends Thread {
         }
         else
             System.out.println("Pas de mise en file");
-        
-        if(req.type == BOOKING)
+        */
+        if(req.type == LOGIN)
+        {
+            traiteRequeteLogin(s, cs);
+        }
+        else if(req.type == BOOKING)
         {
             traiteRequeteBooking(s, cs);
         }
@@ -104,12 +110,14 @@ public class ThreadClient extends Thread {
         Vector infos = new Vector();
         String code, passagers;
         StringTokenizer parser = new StringTokenizer(chargeUtile, "#");
+        System.out.println("tokens");
         while(parser.hasMoreTokens())
             infos.add(parser.nextToken());
         code = (String) infos.get(0);
         //passagers = (String) infos.get(1);
         
         ReponseCHECKINAP rep;
+        System.out.println("check places");
         if(BookingExiste(code))
         {
             System.out.println("Booking ok !");
@@ -123,6 +131,7 @@ public class ThreadClient extends Thread {
             System.out.println("booking n'existe pas !");
             rep = new ReponseCHECKINAP(ReponseCHECKINAP.BOOKING_NOK, getChargeUtile());
         }
+        System.out.println("SERV | Envoi réponse book");
         ObjectOutputStream oos;
         try
         {
@@ -247,7 +256,7 @@ public class ThreadClient extends Thread {
     {
         // Affichage des informations
         String adresseDistante = s.getRemoteSocketAddress().toString();
-        System.out.println("Début de traiteRequete : adresse distante = " + adresseDistante);
+        System.out.println("SERVER | Début de traiteRequeteLOGIN : adresse distante = " + adresseDistante);
         System.out.println("Charge utile recue : " + chargeUtile);
         cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#LOGIN" + "#Thread");
         //Separation champs user#pass
@@ -308,7 +317,7 @@ public class ThreadClient extends Thread {
         }
         catch(ClassNotFoundException e)
         {
-            JOptionPane.showMessageDialog(null, "driver introuvable", "Erreur", JOptionPane.ERROR_MESSAGE); 
+            JOptionPane.showMessageDialog(null, "driver introuvable", "Erreur driver", JOptionPane.ERROR_MESSAGE); 
         }
         System.out.println("Connexion bd_ferries OK");
         sgbd.setAdresse("jdbc:mysql://localhost:3306/BD_FERRIES");
@@ -492,14 +501,16 @@ public class ThreadClient extends Thread {
 
     private RequeteCHECKINAP RecevoirRequete(Socket s) {
         RequeteCHECKINAP rep = null;
-        System.out.println("Recv requete "); 
+        System.out.println("SERVER | Recv requete "); 
         if(s == null)
            System.out.println("socket null ");  
         try
         {
             ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
             rep = (RequeteCHECKINAP)ois.readObject();
-            System.out.println(" *** Reponse reçue : " + rep.getChargeUtile());
+            System.out.println("SERVER *** Reponse reçue : " + rep.getChargeUtile());
+            System.out.println("Type : " + rep.type);
+            chargeUtile = rep.getChargeUtile();
         }
         catch (ClassNotFoundException e)
         { System.out.println("--- erreur sur la classe = " + e.getMessage()); }
