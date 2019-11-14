@@ -36,10 +36,24 @@ public class ListeTaches implements SourceTaches {
     }
     public synchronized void setSocket(Socket s)
     {
+        System.out.println("SetSocket de " + s);
         CSocket = s;
+        notify();
     }
-    public synchronized Socket getSocket()
+    public synchronized Socket getSocket() throws InterruptedException
     {
+        while(CSocket == null)
+        {
+            System.out.println("Thread en attente");
+            wait();
+        }
+        System.out.println("getSocket : soc : " + CSocket);
         return CSocket;
+    }
+    public synchronized boolean SocketNull()
+    {
+        if(CSocket == null)
+            return true;
+        return false;
     }
 }

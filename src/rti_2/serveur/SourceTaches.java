@@ -12,9 +12,10 @@ import java.net.Socket;
  * @author fredm
  */
 public interface SourceTaches {
+    
     public Runnable getTache() throws InterruptedException;
     public boolean existTaches();
     public void recordTache(Runnable r);
     public void setSocket(Socket s);
-    public Socket getSocket();
+    public Socket getSocket()throws InterruptedException;
 }

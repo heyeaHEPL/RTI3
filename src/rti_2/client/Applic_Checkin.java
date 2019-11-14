@@ -495,8 +495,9 @@ public class Applic_Checkin extends javax.swing.JFrame {
         chargeUtile = chargeUtile + "#" + password;
         RequeteCHECKINAP req = null; 
         req = new RequeteCHECKINAP(RequeteCHECKINAP.LOGIN, chargeUtile);
-        
+        //EnvoyerRequete(RequeteCHECKINAP.LOGIN, chargeUtile);
         // Envoi de la requête
+        System.out.println("CLIENT | Envoi Login");
         try
         {
             oos = new ObjectOutputStream(cliSocket.getOutputStream());
@@ -505,6 +506,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
         catch (IOException e)
         { System.err.println("Erreur réseau ? [" + e.getMessage() + "]"); }
         // Lecture de la réponse
+        //rep = RecevoirReponse();
         ReponseCHECKINAP rep = null;
         try
         {
@@ -516,7 +518,8 @@ public class Applic_Checkin extends javax.swing.JFrame {
         { System.out.println("--- erreur sur la classe = " + e.getMessage()); }
         catch (IOException e)
         { System.out.println("--- erreur IO = " + e.getMessage()); }
-        LReponse.setText(rep.getChargeUtile()); 
+        
+        //LReponse.setText(rep.getChargeUtile()); 
         
         if(rep.GetCode() == LOGIN_OK)
         {
@@ -545,7 +548,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
     {
         //Connecter();
         String chargeUtile = TFCode.getText();// + "#" + TFPassagersBook.getText();
-        
+        //Envoyer(RequeteCHECKINAP.BOOKING, chargeUtile);
         RequeteCHECKINAP req = null; 
         req = new RequeteCHECKINAP(RequeteCHECKINAP.BOOKING, chargeUtile);
         System.out.println(" Try envoi requete bokk ");
@@ -553,7 +556,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
         try
         {
             oos = new ObjectOutputStream(cliSocket.getOutputStream());
-            oos.writeObject(req); oos.flush();
+            oos.writeObject(req); //oos.flush();
         }
         catch (IOException e)
         { System.err.println("Erreur réseau ? [" + e.getMessage() + "]"); }
@@ -628,9 +631,9 @@ public class Applic_Checkin extends javax.swing.JFrame {
     private void Buy() {
         //Connecter();
         String chargeUtile = TFConducteur.getText() + "#" + TFImmatriculation.getText() + "#" + TFPassagersBuy.getText() + "#" + TFCarte.getText();
-        ReponseCHECKINAP rep = null;
-        
         Envoyer(RequeteCHECKINAP.BUY, chargeUtile);
+        
+        ReponseCHECKINAP rep = null;
         rep = Recevoir();
         
         if(rep.GetCode() == ReponseCHECKINAP.BUY_OK)

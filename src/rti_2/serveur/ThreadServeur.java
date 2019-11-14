@@ -24,11 +24,12 @@ public class ThreadServeur extends Thread {
     private ConsoleServeur guiApplication;
     private ServerSocket SSocket = null;
     private Socket socketServeurCard = null;
-    
+    public ListeTaches listTaches;
     public ThreadServeur(int p, SourceTaches st, ConsoleServeur fs)
     {
         port =p; tachesAExecuter = st; guiApplication = fs;
         NB_MAX_CLIENTS = ChargerNbClients();
+        listTaches = new ListeTaches();
     }
     
     public void run()
@@ -47,7 +48,7 @@ public class ThreadServeur extends Thread {
         //Démarrage du pool threads
         for(int i=0; i<NB_MAX_CLIENTS; i++)
         {
-            ThreadClient thr = new ThreadClient(tachesAExecuter, "Thread du pool n°" + String.valueOf(i), guiApplication);
+            ThreadClient thr = new ThreadClient(listTaches, "Thread du pool n°" + String.valueOf(i), guiApplication);
             thr.start();
         }
         //Demarrage serveur carte
@@ -62,8 +63,10 @@ public class ThreadServeur extends Thread {
             
             try
             {
-              System.out.println("*********Serveur en attente");
+              System.out.println("*********Serveur en attente de clients");
               CSocket = SSocket.accept();
+              System.out.println("accept socket : " + CSocket);
+              listTaches.setSocket(CSocket);
               guiApplication.TraceEvenements(CSocket.getRemoteSocketAddress().toString() + "#accept#thread serveur");
             }
             catch(IOException e)
@@ -71,7 +74,7 @@ public class ThreadServeur extends Thread {
                 System.err.println("Erreur d'accept ! ? [" + e.getMessage() + "]");
                 System.exit(1);
             }
-            
+            /*
             ObjectInputStream ois =null;
             Requete req = null;
             try
@@ -100,6 +103,7 @@ public class ThreadServeur extends Thread {
             }
             else
                 System.out.println("Pas de mise en file");
+                    */
         }
     }
     private void ConnexionServeurCarte() {
