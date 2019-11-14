@@ -34,6 +34,7 @@ public class ThreadServeur extends Thread {
     
     public void run()
     {
+        //creer la socket server
         try
         {
             SSocket = new ServerSocket(port);
@@ -41,7 +42,6 @@ public class ThreadServeur extends Thread {
         }catch(IOException e)
         {
             System.err.println("Erreur de port d'écoute ! ? [" + e + "]"); 
-            //System.exit(1);
             this.stop();
         }
         
@@ -63,52 +63,20 @@ public class ThreadServeur extends Thread {
             
             try
             {
-              System.out.println("*********Serveur en attente de clients");
+              System.out.println("SERVER | En attente de clients");
               CSocket = SSocket.accept();
-              System.out.println("accept socket : " + CSocket);
               listTaches.setSocket(CSocket);
               guiApplication.TraceEvenements(CSocket.getRemoteSocketAddress().toString() + "#accept#thread serveur");
             }
             catch(IOException e)
             {
                 System.err.println("Erreur d'accept ! ? [" + e.getMessage() + "]");
-                System.exit(1);
             }
-            /*
-            ObjectInputStream ois =null;
-            Requete req = null;
-            try
-            {
-                ois = new ObjectInputStream(CSocket.getInputStream());
-                req = (Requete)ois.readObject();
-                System.out.println("Requete lue par le serveur, instance de " + req.getClass().getName());
-            }
-            catch(ClassNotFoundException e)
-            {
-                System.err.println("Erreur de def de classe [" + e.getMessage() + "]");
-            }
-            catch(IOException e)
-            {
-                System.err.println("Erreur ? [" + e.getMessage() + "]");
-            }
-            
-            Runnable travail = req.createRunnable(CSocket, guiApplication);
-            if(travail != null)
-            {
-                //tachesAExecuter.setSocket(CSocket);
-                //System.out.println("affectation socket" + CSocket);
-                tachesAExecuter.recordTache(travail);
-                
-                System.out.println("Travail mis dans la file");
-            }
-            else
-                System.out.println("Pas de mise en file");
-                    */
         }
     }
     private void ConnexionServeurCarte() {
         try {
-            System.out.println("Try connexion au serveur carte");
+            System.out.println("SERVER | Connexion au serveur carte");
             socketServeurCard = new Socket("0.0.0.0", 50055);
         } 
         catch (UnknownHostException e)
@@ -126,7 +94,7 @@ public class ThreadServeur extends Thread {
             Properties prop = new Properties();
             
             prop.load(input);
-            System.out.println("Config max clients : " + Integer.parseInt(prop.getProperty("NB_MAX_CLIENTS")));
+            System.out.println("vSERVER | Config max clients : " + Integer.parseInt(prop.getProperty("NB_MAX_CLIENTS")));
             return Integer.parseInt(prop.getProperty("NB_MAX_CLIENTS"));
         }
         catch(IOException e)

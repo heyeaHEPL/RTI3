@@ -21,8 +21,18 @@ import java.sql.SQLException;
 import java.util.StringTokenizer;
 import java.util.Vector;
 import javax.swing.JOptionPane;
+import static rti_2.checkinap.ReponseCHECKINAP.BOOKING_NOK;
+import static rti_2.checkinap.ReponseCHECKINAP.BOOKING_OK;
+import static rti_2.checkinap.ReponseCHECKINAP.BUY_NOK;
+import static rti_2.checkinap.ReponseCHECKINAP.BUY_OK;
+import static rti_2.checkinap.ReponseCHECKINAP.CLOSE_OK;
+import static rti_2.checkinap.ReponseCHECKINAP.LOGIN_OK;
+import static rti_2.checkinap.RequeteCHECKINAP.IS_CARTE_VALIDE;
 import static rti_2.checkinap.RequeteCHECKINAP.LOGIN;
 import rti_2.checkinap.requetereponse.ConsoleServeur;
+import static rti_2.network.NetworkLibrary.EnvoyerReponse;
+import static rti_2.network.NetworkLibrary.EnvoyerRequete;
+import static rti_2.network.NetworkLibrary.RecevoirReponse;
 
 /**
  *
@@ -51,37 +61,25 @@ public class ThreadClient extends Thread {
         {
             try
             {
-                System.out.println("Thread client avant getSocket");
-                //tacheEnCours = tachesAExecuter.getTache();
+                System.out.println("SERVER | Thread " + this.getId() + " avant getSocket");
                 CSocket = listTaches.getSocket();
-                System.out.println("Socket client recue :" + CSocket);
+                System.out.println("SERVER | Socket client recue :" + CSocket);
             }
             catch(InterruptedException e)
             {
-                System.out.println("Interruption : " + e.getMessage());
+                System.out.println("SERVER | Interruption : " + e.getMessage());
             }
-            System.out.println("TraiterRequete");
-            //acheEnCours.run();
-            
             //attente autre requetes
             TraiterRequete(CSocket, cs);
         }
     }
     private void TraiterRequete(Socket s, ConsoleServeur cs) {
+        //Attendre la requete
+        System.out.println("SERVER | Thread " + this.getId() + " Attente requete");
         RequeteCHECKINAP req = null;
         req = RecevoirRequete(s);
-        /*Runnable travail = req.createRunnable(CSocket, cs);
-        if(travail != null)
-        {
-            //tachesAExecuter.setSocket(CSocket);
-            //System.out.println("affectation socket" + CSocket);
-            tachesAExecuter.recordTache(travail);
-                
-            System.out.println("Travail mis dans la file");
-        }
-        else
-            System.out.println("Pas de mise en file");
-        */
+        
+        //Traiter la requete
         if(req.type == LOGIN)
         {
             traiteRequeteLogin(s, cs);
@@ -104,9 +102,9 @@ public class ThreadClient extends Thread {
     
     private synchronized void traiteRequeteBooking(Socket s, ConsoleServeur cs)
     {
-        System.out.println("Socket client book :" + CSocket);
-        System.out.println("Charge utile recue : " + chargeUtile);
-        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#BOOKING" + "#Thread");
+        System.out.println("SERVER | Booking Charge utile recue : " + chargeUtile);
+        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#BOOKING" + "#Thread"+ this.getId());
+        //separation champs recus
         Vector infos = new Vector();
         String code, passagers;
         StringTokenizer parser = new StringTokenizer(chargeUtile, "#");
@@ -114,40 +112,26 @@ public class ThreadClient extends Thread {
         while(parser.hasMoreTokens())
             infos.add(parser.nextToken());
         code = (String) infos.get(0);
-        //passagers = (String) infos.get(1);
         
         ReponseCHECKINAP rep;
-        System.out.println("check places");
+        //si la reservation existe envoyer reponse OK
         if(BookingExiste(code))
         {
-            System.out.println("Booking ok !");
             int places = RecupPlaces(code);
-            //if(places != "-1")
             chargeUtile = Integer.toString(places);
-            rep = new ReponseCHECKINAP(ReponseCHECKINAP.BOOKING_OK, getChargeUtile());
+            EnvoyerReponse(s, BOOKING_OK, getChargeUtile());
         }
         else
         {
-            System.out.println("booking n'existe pas !");
-            rep = new ReponseCHECKINAP(ReponseCHECKINAP.BOOKING_NOK, getChargeUtile());
+            System.out.println("SERVER | booking n'existe pas !");
+            EnvoyerReponse(s, BOOKING_NOK, getChargeUtile());
         }
-        System.out.println("SERV | Envoi réponse book");
-        ObjectOutputStream oos;
-        try
-        {
-        oos = new ObjectOutputStream(s.getOutputStream());
-        oos.writeObject(rep); oos.flush();
-        //oos.close();
-        }
-        catch (IOException e)
-        {
-        System.err.println("Erreur réseau ? [" + e.getMessage() + "]");
-        }
+        System.out.println("SERVER | Envoi réponse book");
     }
     private synchronized void traiteRequeteBuy(Socket s, ConsoleServeur cs)
     {
-        System.out.println("Charge utile recue : " + chargeUtile);
-        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#BUY" + "#Thread");
+        System.out.println("SERVER | BUY Charge utile recue : " + chargeUtile);
+        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#BUY" + "#Thread"+ this.getId()+ this.getId());
         Vector infos = new Vector();
         String nom, immatriculation, passagers, carte;
         StringTokenizer parser = new StringTokenizer(chargeUtile, "#");
@@ -160,66 +144,24 @@ public class ThreadClient extends Thread {
         
         ReponseCHECKINAP rep = null; 
         //Verif serveur de cartes
-        System.out.println("Carte : " + carte);
+        System.out.println("SERVER | Carte : " + carte);
         if(socketServeurCard == null)
         {
-            System.out.println("socket cartes null -- connexion");
+            System.out.println("SERVER | socket cartes null -- connexion");
             ConnexionServeurCarte();
         }
         if(CarteValide(carte, socketServeurCard))
         {
-            System.out.println("carte_remote ok");
-            rep = new ReponseCHECKINAP(ReponseCHECKINAP.BUY_OK, getChargeUtile());
+            System.out.println("SERVER | carte_remote ok");
+            EnvoyerReponse(s, BUY_OK, getChargeUtile());
         }
         else
         {
-            System.out.println("carte_remote invalide");
-            rep = new ReponseCHECKINAP(ReponseCHECKINAP.BUY_NOK, getChargeUtile());
+            System.out.println("SERVER | carte_remote invalide");
+            EnvoyerReponse(s, BUY_NOK, getChargeUtile());
         }
         
-        /*
         
-        
-        
-        
-        if(card_Socket != null)
-        {
-            if(CarteValide(carte, CSocket))
-            {
-                System.out.println("carte_remote ok");
-                rep = new ReponseCHECKINAP(ReponseCHECKINAP.BUY_OK, getChargeUtile());
-            }
-            else
-            {
-                System.out.println("carte_remote invalide");
-                rep = new ReponseCHECKINAP(ReponseCHECKINAP.BUY_NOK, getChargeUtile());
-            }
-        }
-        else
-        {
-            System.out.println("Erreur Socket serveur card null");
-            rep = new ReponseCHECKINAP(ReponseCHECKINAP.BUY_NOK, getChargeUtile());
-        }
-        /*
-        if(ser.CarteValide(carte))
-        {
-            //si ok verif qu'il y a assez de place
-            if(PlaceDispo(nom))
-            {
-                rep = new ReponseCHECKINAP(ReponseCHECKINAP.BUY_OK, getChargeUtile());
-            }
-            else
-            {
-                System.out.println("Pas de place dispo !");
-                rep = new ReponseCHECKINAP(ReponseCHECKINAP.BUY_NOK, getChargeUtile());
-            }
-        }
-        else
-        {
-           System.out.println("Carte invalide : "); 
-           rep = new ReponseCHECKINAP(ReponseCHECKINAP.BUY_NOK, getChargeUtile());
-        }
-        */
         ObjectOutputStream oos;
         try
         {
@@ -234,31 +176,34 @@ public class ThreadClient extends Thread {
     }
     private synchronized void traiteRequeteClose(Socket s, ConsoleServeur cs)
     {
-        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#CLOSE" + "#Thread");
+        System.out.println("SERVER |  CLOSE Recu");
+        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#CLOSE" + "#Thread"+ this.getId());
         
-        ReponseCHECKINAP rep = new ReponseCHECKINAP(ReponseCHECKINAP.CLOSE_OK, getChargeUtile());
+        //EnvoyerReponse(s, CLOSE_OK, getChargeUtile());
+        chargeUtile = "Close";
+        ReponseCHECKINAP rep = new ReponseCHECKINAP(CLOSE_OK, getChargeUtile());
         
         ObjectOutputStream oos;
         try
         {
         oos = new ObjectOutputStream(s.getOutputStream());
         oos.writeObject(rep); oos.flush();
-        oos.close();
+        //oos.close();
         }
         catch (IOException e)
         {
         System.err.println("Erreur réseau ? [" + e.getMessage() + "]");
         }
         
-        System.exit(1);
+        System.exit(0);
     }
     private synchronized void traiteRequeteLogin(Socket s, ConsoleServeur cs)
     {
         // Affichage des informations
-        String adresseDistante = s.getRemoteSocketAddress().toString();
-        System.out.println("SERVER | Début de traiteRequeteLOGIN : adresse distante = " + adresseDistante);
-        System.out.println("Charge utile recue : " + chargeUtile);
-        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#LOGIN" + "#Thread");
+        //String adresseDistante = s.getRemoteSocketAddress().toString();
+        System.out.println("SERVER | TraiterLOGIN");
+        System.out.println("SERVER | Charge utile recue : " + chargeUtile);
+        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#LOGIN" + "#Thread" + this.getId());
         //Separation champs user#pass
         Vector infos = new Vector();
         String user;
@@ -273,24 +218,11 @@ public class ThreadClient extends Thread {
         ReponseCHECKINAP rep;
         if(LoginExiste(user, pass))
         {
-            rep = new ReponseCHECKINAP(ReponseCHECKINAP.LOGIN_OK, getChargeUtile());
+            EnvoyerReponse(s, LOGIN_OK, getChargeUtile());
         }
         else
         {
-            rep = new ReponseCHECKINAP(ReponseCHECKINAP.LOGIN_NOK, getChargeUtile());
-        }
-        // Construction d'une réponse
-        
-        ObjectOutputStream oos;
-        try
-        {
-        oos = new ObjectOutputStream(s.getOutputStream());
-        oos.writeObject(rep);// oos.flush();
-        //oos.close();
-        }
-        catch (IOException e)
-        {
-        System.err.println("Erreur réseau ? [" + e.getMessage() + "]");
+            EnvoyerReponse(s, LOGIN_OK, getChargeUtile());
         }
     }
     
@@ -306,11 +238,10 @@ public class ThreadClient extends Thread {
                 return true;
         return false;
     }
-
     private boolean BookingExiste(String code) {
         MyInstruction sgbd;
         sgbd = new MyInstruction();
-        System.out.println("id reservation : " + code);
+        System.out.println("SERVER | id reservation : " + code);
         try
         {
             Class.forName("com.mysql.jdbc.Driver");
@@ -319,7 +250,7 @@ public class ThreadClient extends Thread {
         {
             JOptionPane.showMessageDialog(null, "driver introuvable", "Erreur driver", JOptionPane.ERROR_MESSAGE); 
         }
-        System.out.println("Connexion bd_ferries OK");
+        System.out.println("SERVER | Connexion bd_ferries OK");
         sgbd.setAdresse("jdbc:mysql://localhost:3306/BD_FERRIES");
         sgbd.setLogin("root");
         sgbd.setPassword("root");
@@ -338,7 +269,7 @@ public class ThreadClient extends Thread {
             {
                if(sgbd.getResultat().getString("identifiant") != null)
                 {
-                    System.out.println("res bd : " + sgbd.getResultat().getString("identifiant"));
+                    System.out.println("SERVER | res bd : " + sgbd.getResultat().getString("identifiant"));
                     return true;
                 }
             }
@@ -349,13 +280,12 @@ public class ThreadClient extends Thread {
         }
         return false;
     }
-
     private boolean PlaceDispo(String nom) {
         MyInstruction sgbd;
         
         sgbd = new MyInstruction();
         
-        System.out.println("Place dispo : ");
+        System.out.println("SERVER | Place dispo : ");
         try
         {
             Class.forName("com.mysql.jdbc.Driver");
@@ -364,7 +294,7 @@ public class ThreadClient extends Thread {
         {
             JOptionPane.showMessageDialog(null, "driver introuvable", "Erreur", JOptionPane.ERROR_MESSAGE); 
         }
-        System.out.println("Connexion bd_ferries OK");
+        System.out.println("SERVER | Connexion bd_ferries OK");
         sgbd.setAdresse("jdbc:mysql://localhost:3306/BD_FERRIES");
         sgbd.setLogin("root");
         sgbd.setPassword("root");
@@ -396,12 +326,11 @@ public class ThreadClient extends Thread {
         }
         return false;
     }
-
     private int RecupPlaces(String code) {
         MyInstruction sgbd;
         sgbd = new MyInstruction();
         int places;
-        System.out.println("Recup places : ");
+        System.out.println("SERVER | Recup places : ");
         try
         {
             Class.forName("com.mysql.jdbc.Driver");
@@ -410,7 +339,7 @@ public class ThreadClient extends Thread {
         {
             JOptionPane.showMessageDialog(null, "driver introuvable", "Erreur", JOptionPane.ERROR_MESSAGE); 
         }
-        System.out.println("Connexion bd_ferries OK");
+        System.out.println("SERVER | Connexion bd_ferries OK");
         sgbd.setAdresse("jdbc:mysql://localhost:3306/BD_FERRIES");
         sgbd.setLogin("root");
         sgbd.setPassword("root");
@@ -442,13 +371,12 @@ public class ThreadClient extends Thread {
         }
         return -1;
     }
-
     private boolean CarteValide(String carte, Socket card_Socket) {
         
         //ConnexionServeurCarte();
-        Envoyer(RequeteCHECKINAP.IS_CARTE_VALIDE, carte, card_Socket);
+        EnvoyerRequete(card_Socket, IS_CARTE_VALIDE, carte);
         ReponseCHECKINAP rep = null;
-        rep = Recevoir(card_Socket);
+        rep = RecevoirReponse(card_Socket);
         
         if(rep.GetCode() == ReponseCHECKINAP.CARTE_OK)
         {
@@ -457,21 +385,6 @@ public class ThreadClient extends Thread {
         
         return false;
     }
-    private void Envoyer(int code, String chargeUtile, Socket card_Socket) {
-        RequeteCHECKINAP req = null; 
-        req = new RequeteCHECKINAP(code, chargeUtile);
-        
-        // Envoi de la requête
-        try
-        {
-            ObjectOutputStream oos = new ObjectOutputStream(card_Socket.getOutputStream());
-            oos.writeObject(req); oos.flush();
-        }
-        catch (IOException e)
-        { System.err.println("Erreur réseau ? [" + e.getMessage() + "]"); }
-        
-    }
-
     private ReponseCHECKINAP Recevoir(Socket card_Socket) {
         // Lecture de la réponse
         ReponseCHECKINAP rep = null;
@@ -499,18 +412,17 @@ public class ThreadClient extends Thread {
         { System.err.println("Erreur Serveur Cartes ! Pas de connexion ? [" + e + "]");
         }
     }
-
     private RequeteCHECKINAP RecevoirRequete(Socket s) {
         RequeteCHECKINAP rep = null;
-        System.out.println("SERVER | Recv requete "); 
+        System.out.println("SERVER | Reception requete "); 
         if(s == null)
            System.out.println("socket null ");  
         try
         {
             ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
             rep = (RequeteCHECKINAP)ois.readObject();
-            System.out.println("SERVER *** Reponse reçue : " + rep.getChargeUtile());
-            System.out.println("Type : " + rep.type);
+            System.out.println("SERVER | Reponse reçue : " + rep.getChargeUtile());
+            System.out.println("SERVER | Type : " + rep.type);
             chargeUtile = rep.getChargeUtile();
         }
         catch (ClassNotFoundException e)

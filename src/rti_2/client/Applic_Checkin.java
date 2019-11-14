@@ -496,7 +496,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
         String chargeUtile = user;
         chargeUtile = chargeUtile + "#" + password;
         
-        System.out.println("CLIENT | Envoi requete Login");
+        System.out.println("CLIENT | Envoi requete Login avec "+ chargeUtile);
         EnvoyerRequete(cliSocket, RequeteCHECKINAP.LOGIN, chargeUtile);
         
         ReponseCHECKINAP rep = null;
@@ -505,7 +505,7 @@ public class Applic_Checkin extends javax.swing.JFrame {
         
         if(rep.GetCode() == LOGIN_OK)
         {
-            System.out.println("Login ok !");
+            System.out.println("CLIENT | Login ok !");
             LReponse.setText("Login accepté !");
             PanelLogin.setVisible(false);
             PanelCommandes.setVisible(true);
@@ -513,12 +513,14 @@ public class Applic_Checkin extends javax.swing.JFrame {
         }
         else
         {
-            System.out.println("Login refusé !");
+            LReponse.setText("Login refusé !");
+            System.out.println("CLIENT | Login refusé !");
         }
     }
 
     private void RequeteBooking() {
         PanelBuy.setVisible(false);
+        PanelCommandes.setLocation(0, 0);
         PanelBook.setVisible(true);
         this.pack();
     }
@@ -545,7 +547,6 @@ public class Applic_Checkin extends javax.swing.JFrame {
     }
     
     private void RequeteBuy() {
-       // if(PanelBook.isVisible())
         PanelBook.setVisible(false);
         PanelBuy.setVisible(true);
         this.pack();
@@ -559,13 +560,9 @@ public class Applic_Checkin extends javax.swing.JFrame {
         rep = RecevoirReponse(cliSocket);
         
         if(rep.GetCode() == ReponseCHECKINAP.BUY_OK)
-        {
             LReponse.setText("Achat réussi !");
-        }
         else if(rep.GetCode() == ReponseCHECKINAP.BUY_NOK)
-        {
             LReponse.setText("Achat échoué !");
-        }
     }
     private void RequeteClose() {
         
@@ -581,8 +578,6 @@ public class Applic_Checkin extends javax.swing.JFrame {
             this.dispose();
         }
         else
-        {
             LReponse.setText("Close échoué !");
-        }
     }
 }
