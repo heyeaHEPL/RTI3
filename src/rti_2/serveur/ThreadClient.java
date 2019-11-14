@@ -352,6 +352,7 @@ public class ThreadClient extends Thread {
 
     private boolean PlaceDispo(String nom) {
         MyInstruction sgbd;
+        
         sgbd = new MyInstruction();
         
         System.out.println("Place dispo : ");
