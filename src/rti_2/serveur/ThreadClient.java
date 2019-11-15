@@ -67,9 +67,9 @@ public class ThreadClient extends Thread {
         {
             System.out.println("SERVER | Interruption : " + e.getMessage());
         }
+        
         while(!isInterrupted())
         {
-            
             //attente autre requetes
             TraiterRequete(CSocket, cs);
         }
@@ -368,21 +368,6 @@ public class ThreadClient extends Thread {
         }
         
         return false;
-    }
-    private ReponseCHECKINAP Recevoir(Socket card_Socket) {
-        // Lecture de la réponse
-        ReponseCHECKINAP rep = null;
-        try
-        {
-            ObjectInputStream ois = new ObjectInputStream(card_Socket.getInputStream());
-            rep = (ReponseCHECKINAP)ois.readObject();
-            System.out.println(" *** Reponse reçue : " + rep.getChargeUtile());
-        }
-        catch (ClassNotFoundException e)
-        { System.out.println("--- erreur sur la classe = " + e.getMessage()); }
-        catch (IOException e)
-        { System.out.println("--- erreur IO = " + e.getMessage()); }
-        return rep;
     }
     private void ConnexionServeurCarte() {
         try {

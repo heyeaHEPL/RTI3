@@ -92,7 +92,7 @@ public class ThreadServeur extends Thread {
             Properties prop = new Properties();
             
             prop.load(input);
-            System.out.println("vSERVER | Config max clients : " + Integer.parseInt(prop.getProperty("NB_MAX_CLIENTS")));
+            System.out.println("SERVER | Config max clients : " + Integer.parseInt(prop.getProperty("NB_MAX_CLIENTS")));
             return Integer.parseInt(prop.getProperty("NB_MAX_CLIENTS"));
         }
         catch(IOException e)
