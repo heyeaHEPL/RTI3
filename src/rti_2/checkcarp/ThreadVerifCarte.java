@@ -14,6 +14,8 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
@@ -26,11 +28,10 @@ public class ThreadVerifCarte extends Thread {
     private ServerSocket SocketCard;
     private MyInstruction sgbd;
     private int PORT_CARD = 50055;
-    ThreadVerifCarte(Socket s) {
+    ThreadVerifCarte(ServerSocket s) {
         nom = "threadCarte";
-        CSocket = s;
-        ConnexionServeur();
-
+        SocketCard = s;
+        System.out.println("SERVER | Creation Thread Carte");
     }
     
     public void run()
@@ -39,19 +40,16 @@ public class ThreadVerifCarte extends Thread {
         String carte;
         while(!isInterrupted())
         {
-            System.out.println("Serveur carte en attente de requete");
-            rep = AttenteRequete();
-
-            if(rep.type == RequeteCHECKINAP.IS_CARTE_VALIDE)
+            while(true)
             {
-                ConnexionDBCard();
-                if(CarteValide(rep.getChargeUtile()))
-                    EnvoiReponse(ReponseCHECKINAP.CARTE_OK ,"CARTE_OK");
-                else
-                    EnvoiReponse(ReponseCHECKINAP.CARTE_NOK, "CARTE_NOK");
+                try {
+                    CSocket = SocketCard.accept();
+                } catch (IOException ex) {
+                    Logger.getLogger(ThreadVerifCarte.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                ThreadCarteReq th = new ThreadCarteReq(CSocket);
+                th.run();
             }
-        else
-            System.out.println("Serveur carte Erreur recept requete inconnue");
         }
         
              
@@ -63,7 +61,6 @@ public class ThreadVerifCarte extends Thread {
         try
         {
             System.out.println("Serveur carte en attente de connexion");
-            SocketCard = new ServerSocket(PORT_CARD);
             CSocket = SocketCard.accept();
             
         }catch(IOException e)
@@ -73,74 +70,13 @@ public class ThreadVerifCarte extends Thread {
         }
         System.out.println("Connexion au serveur cartes établie");
     }
-    private void ConnexionDBCard() {
-        boolean erreur = false;
-        System.out.println("Try driver");
-        sgbd = new MyInstruction();
+    private ServerSocket CreerServerSocket()
+    {
         try {
-            Class.forName("com.mysql.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            System.out.println(e);
-            JOptionPane.showMessageDialog(null, "Serveur_Card : driver introuvable", "Erreur", JOptionPane.ERROR_MESSAGE);
-            erreur = true;
+            SocketCard = new ServerSocket(PORT_CARD);
+        } catch (IOException ex) {
+            Logger.getLogger(ThreadVerifCarte.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        if (!erreur) {
-            System.out.println("Connexion reussie");
-            sgbd.setAdresse("jdbc:mysql://localhost:3306/bd_card");
-            sgbd.setLogin("root");
-            sgbd.setPassword("root");
-            try {
-                sgbd.Connexion();
-            } catch (SQLException e) {
-                JOptionPane.showMessageDialog(null, "Serveur_Card : connexion à la BD impossible", "Erreur", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    private RequeteCHECKINAP AttenteRequete() {
-        RequeteCHECKINAP rep = null;
-        try
-        {
-            ObjectInputStream ois = new ObjectInputStream(CSocket.getInputStream());
-            rep = (RequeteCHECKINAP)ois.readObject();
-            System.out.println(" *** Reponse reçue : " + rep.getChargeUtile());
-        }
-        catch (ClassNotFoundException e)
-        { System.out.println("--- erreur sur la classe = " + e.getMessage()); }
-        catch (IOException e)
-        { System.out.println("--- erreur IO = " + e.getMessage()); }
-        return rep;
-    }
-
-    private void EnvoiReponse(int code, String chargeUtile) {
-        ReponseCHECKINAP req = null; 
-        req = new ReponseCHECKINAP(code, chargeUtile);
-        
-        // Envoi de la requête
-        try
-        {
-            ObjectOutputStream oos = new ObjectOutputStream(CSocket.getOutputStream());
-            oos.writeObject(req); oos.flush();
-        }
-        catch (IOException e)
-        { System.err.println("Erreur réseau ? [" + e.getMessage() + "]"); }
-    }
-
-    private boolean CarteValide(String carte) {
-        try {
-            sgbd.SelectionCond("carte", "numcarte LIKE '" + carte + "'"); //tous les résultats.
-
-            if (sgbd.getResultat().next()) {
-                if (sgbd.getResultat().getString("numcarte") != null) {
-                    return true;
-                }
-            }
-
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Serveur_Card : erreur obtention infos carte", "Erreur", JOptionPane.ERROR_MESSAGE);
-            System.out.println(e);
-        }
-
-        return false;
+        return SocketCard;
     }
 }

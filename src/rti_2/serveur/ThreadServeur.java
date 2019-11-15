@@ -45,17 +45,15 @@ public class ThreadServeur extends Thread {
             this.stop();
         }
         
+        Serveur_Carte serv = new Serveur_Carte();
+
         //Démarrage du pool threads
         for(int i=0; i<NB_MAX_CLIENTS; i++)
         {
             ThreadClient thr = new ThreadClient(listTaches, "Thread du pool n°" + String.valueOf(i), guiApplication);
             thr.start();
         }
-        //Demarrage serveur carte
-        ThreadCarte th = new ThreadCarte(guiApplication);
-        th.start();
-        //ConnexionServeurCarte();
-        //Mise en attente du serveur
+        
         Socket CSocket = null;
         
         while(!isInterrupted())

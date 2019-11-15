@@ -57,23 +57,24 @@ public class ThreadClient extends Thread {
     
     public void run()
     {
+        try
+        {
+            System.out.println("SERVER | Thread " + this.getId() + " avant getSocket");
+            CSocket = listTaches.getSocket();
+            System.out.println("SERVER | Socket client recue :" + CSocket);
+        }
+        catch(InterruptedException e)
+        {
+            System.out.println("SERVER | Interruption : " + e.getMessage());
+        }
         while(!isInterrupted())
         {
-            try
-            {
-                System.out.println("SERVER | Thread " + this.getId() + " avant getSocket");
-                CSocket = listTaches.getSocket();
-                System.out.println("SERVER | Socket client recue :" + CSocket);
-            }
-            catch(InterruptedException e)
-            {
-                System.out.println("SERVER | Interruption : " + e.getMessage());
-            }
+            
             //attente autre requetes
             TraiterRequete(CSocket, cs);
         }
     }
-    private void TraiterRequete(Socket s, ConsoleServeur cs) {
+    private synchronized void TraiterRequete(Socket s, ConsoleServeur cs) {
         //Attendre la requete
         System.out.println("SERVER | Thread " + this.getId() + " Attente requete");
         RequeteCHECKINAP req = null;
@@ -131,7 +132,7 @@ public class ThreadClient extends Thread {
     private synchronized void traiteRequeteBuy(Socket s, ConsoleServeur cs)
     {
         System.out.println("SERVER | BUY Charge utile recue : " + chargeUtile);
-        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#BUY" + "#Thread"+ this.getId()+ this.getId());
+        cs.TraceEvenements(s.getRemoteSocketAddress().toString() + "#BUY" + "#Thread"+ this.getId());
         Vector infos = new Vector();
         String nom, immatriculation, passagers, carte;
         StringTokenizer parser = new StringTokenizer(chargeUtile, "#");
@@ -141,15 +142,11 @@ public class ThreadClient extends Thread {
         immatriculation = (String) infos.get(1);
         passagers = (String) infos.get(2);
         carte = (String) infos.get(3);
-        
         ReponseCHECKINAP rep = null; 
         //Verif serveur de cartes
         System.out.println("SERVER | Carte : " + carte);
-        if(socketServeurCard == null)
-        {
-            System.out.println("SERVER | socket cartes null -- connexion");
             ConnexionServeurCarte();
-        }
+        
         if(CarteValide(carte, socketServeurCard))
         {
             System.out.println("SERVER | carte_remote ok");
@@ -159,19 +156,6 @@ public class ThreadClient extends Thread {
         {
             System.out.println("SERVER | carte_remote invalide");
             EnvoyerReponse(s, BUY_NOK, getChargeUtile());
-        }
-        
-        
-        ObjectOutputStream oos;
-        try
-        {
-        oos = new ObjectOutputStream(s.getOutputStream());
-        oos.writeObject(rep); //oos.flush();
-        //oos.close();
-        }
-        catch (IOException e)
-        {
-        System.err.println("Erreur réseau ? [" + e.getMessage() + "]");
         }
     }
     private synchronized void traiteRequeteClose(Socket s, ConsoleServeur cs)

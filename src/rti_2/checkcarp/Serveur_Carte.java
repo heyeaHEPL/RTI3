@@ -14,6 +14,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 /**
@@ -31,8 +33,12 @@ public class Serveur_Carte {
     public Serveur_Carte() {
         Config();
         
-        //ConnexionServeur();
-        ThreadVerifCarte th = new ThreadVerifCarte(CSocket);
+        try {
+            SocketCard = new ServerSocket(PORT_CARD);
+        } catch (IOException ex) {
+            Logger.getLogger(ThreadVerifCarte.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        ThreadVerifCarte th = new ThreadVerifCarte(SocketCard);
         th.start();        
     }
 
@@ -40,19 +46,5 @@ public class Serveur_Carte {
 
         System.out.println("Config serveur cartes terminee");
     }
-    private void ConnexionServeur() {
-        
-        try
-        {
-            System.out.println("Serveur carte en attente de connexion");
-            SocketCard = new ServerSocket(PORT_CARD);
-            CSocket = SocketCard.accept();
-            
-        }catch(IOException e)
-        {
-            System.err.println("Erreur de port d'écoute ! ? [" + e + "]"); 
-            //System.exit(1);
-        }
-        System.out.println("Connexion au serveur cartes établie");
-    }
+    
 }

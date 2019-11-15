@@ -23,12 +23,8 @@ public class ThreadCarte extends Thread {
     }
     
     public void run()
-    {
-                
+    {       
         guiApplication.TraceEvenements("threadCarte" + "#serveur_carte#thread serveur");
         Serveur_Carte ser = new Serveur_Carte();
-        
-        
-        
     }
 }
