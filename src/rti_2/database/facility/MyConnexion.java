@@ -49,4 +49,9 @@ public class MyConnexion implements Serializable
     {
         Conn = DriverManager.getConnection(Adresse,Login,Password);
     }
+    
+    public Connection getConnect()
+    {
+        return Conn;
+    }
 }

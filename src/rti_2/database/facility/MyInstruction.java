@@ -26,15 +26,23 @@ public class MyInstruction extends MyConnexion
         Resultat=PS.executeQuery();
     }
     
+    public synchronized void SelectionCondMatNav(String val)throws SQLException
+    {
+        PS = Conn.prepareStatement("Select * from navires where matricule like ?");
+        PS.setString(1, val);
+        Resultat = PS.executeQuery();
+    }
+    
     public synchronized void SelectionCond(String table,String cond) throws SQLException
     {
-        PS = Conn.prepareStatement("SELECT * FROM "+table+" where "+cond);
+        PS = Conn.prepareStatement("SELECT * FROM "+table+" where " + cond);       
         Resultat=PS.executeQuery();
     }
     
     public synchronized void SelectCount(String table) throws SQLException
     {
         PS = Conn.prepareStatement("SELECT count(*) FROM "+table);
+        //PS.setString(1, table);
         Resultat=PS.executeQuery();
     }
     public synchronized void SelectCountCond(String table,String cond) throws SQLException
@@ -57,7 +65,7 @@ public class MyInstruction extends MyConnexion
     }
     public synchronized void InsertTrav (String id,String date,String depart, String dest, String navire)throws SQLException
     {
-        String query = "insert into traversees (identifiant,date_depart,depart,destination,navire)"+ "values(?,?,?,?,?)";
+        String query = "insert into traversees (identifiant,date_depart,depart,destination,navire)"+"values(?,?,?,?,?)";
         PS = Conn.prepareStatement(query);
         PS.setString(1, id);
         PS.setString(2, date);
@@ -94,20 +102,18 @@ public class MyInstruction extends MyConnexion
 
     public synchronized boolean BuyTicket (String Nom)throws SQLException
     {
-        System.out.println("Cherche la prochaine traversée");
         String idTrav = getNextTravToday();
-        System.out.println("id : " + idTrav);
         
         if(idTrav.equals("nope"))
         {
-            System.out.println("pas de traversees aujourd'hui"); return false;
+            System.out.println("pas de traversees aujourd'hui"); 
+            return false;
         }
         System.out.println("traversees trouvee : ajout d'un nouveau client");
         
         
         
         
-        /*ICI IL FAUT MODIFIER POUR S'ASSURER QUE LE CLIENT N'EXISTE PAS ENCORE AVANT DE L'AJOUTER*/
         
         int idClient = getNewIdClient();
         
@@ -117,16 +123,15 @@ public class MyInstruction extends MyConnexion
         PS.setString(2, Nom);
         
         PS.execute();
-        /* FIN DE COMMENTAIRE*/
+        
         
         
         
         System.out.println("client ajoute\najout de la reservation");
         
         query ="insert into reservations (identifiant,traversee,voyageur_titulaire,paye,passe_check)"+"values(?,?,?,?,?)";
-        String idRes = getNewIdRes();
         PS = Conn.prepareStatement(query);
-        PS.setString(1, idRes);
+        PS.setString(1, getNewIdRes());
         PS.setString(2, idTrav);
         PS.setInt(3, idClient);
         PS.setString(4, "N");
@@ -142,10 +147,10 @@ public class MyInstruction extends MyConnexion
         String today;
         Long millis = System.currentTimeMillis();
         date = new Date(millis);
-        today = new SimpleDateFormat("yyyy-MM-dd").format(date);
+        today = new SimpleDateFormat("yyyy-MM-dd hh:mm").format(date);
         Resultat = null;
-        this.SelectionCond("traversees", "date_depart >= "+today);
-        System.out.println("date ajd : " + today);
+        this.SelectionCond("traversees", "date_depart > "+today);
+        
         if(Resultat == null)
             return "nope";
         
@@ -177,6 +182,18 @@ public class MyInstruction extends MyConnexion
         Resultat.next();
         int res = Resultat.getInt(1)+1;
         return res;
+    }
+    
+    synchronized public void upDate(String req) throws SQLException
+    {
+        PS=Conn.prepareStatement(req);
+        PS.executeUpdate();
+    }
+    
+    synchronized public void Query(String req) throws SQLException
+    {
+        PS=Conn.prepareStatement(req);
+        Resultat=PS.executeQuery();
     }
     
 }

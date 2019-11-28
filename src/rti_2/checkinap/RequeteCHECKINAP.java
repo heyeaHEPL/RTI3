@@ -49,6 +49,11 @@ public class RequeteCHECKINAP implements Requete, Serializable{
     private Socket socketClient;
     private Socket socketServeurCard;
     
+    public int getCode()
+    {
+        return type;
+    }
+    
     public RequeteCHECKINAP(int t, String chu)
     {
         type = t; setChargeUtile(chu);
@@ -72,5 +77,10 @@ public class RequeteCHECKINAP implements Requete, Serializable{
                 
             }
         };
+    }
+
+    @Override
+    public void requeteStart(Socket s) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

@@ -5,6 +5,7 @@
  */
 package rti_2.serveur;
 
+import eboop.requeteEBOOP;
 import rti_2.checkinap.ReponseCHECKINAP;
 import rti_2.checkinap.RequeteCHECKINAP;
 import static rti_2.checkinap.RequeteCHECKINAP.BOOKING;
@@ -30,6 +31,7 @@ import static rti_2.checkinap.ReponseCHECKINAP.LOGIN_OK;
 import static rti_2.checkinap.RequeteCHECKINAP.IS_CARTE_VALIDE;
 import static rti_2.checkinap.RequeteCHECKINAP.LOGIN;
 import rti_2.checkinap.requetereponse.ConsoleServeur;
+import rti_2.checkinap.requetereponse.Requete;
 import static rti_2.network.NetworkLibrary.EnvoyerReponse;
 import static rti_2.network.NetworkLibrary.EnvoyerRequete;
 import static rti_2.network.NetworkLibrary.RecevoirReponse;
@@ -77,26 +79,32 @@ public class ThreadClient extends Thread {
     private synchronized void TraiterRequete(Socket s, ConsoleServeur cs) {
         //Attendre la requete
         System.out.println("SERVER | Thread " + this.getId() + " Attente requete");
-        RequeteCHECKINAP req = null;
+        Requete req = null;
         req = RecevoirRequete(s);
         
         //Traiter la requete
-        if(req.type == LOGIN)
+        if(req.getCode() == LOGIN)
         {
             traiteRequeteLogin(s, cs);
         }
-        else if(req.type == BOOKING)
+        else if(req.getCode() == BOOKING)
         {
             traiteRequeteBooking(s, cs);
         }
-        else if(req.type == BUY)
+        else if(req.getCode() == BUY)
         {
             traiteRequeteBuy(s, cs);
         }
-        else if(req.type == CLOSE)
+        else if(req.getCode() == CLOSE)
         {
             traiteRequeteClose(s, cs);
         }
+        else if(req.getCode()==requeteEBOOP.REQSTART)
+        {
+            req = (requeteEBOOP) req;
+            req.requeteStart(s);
+        }
+
     }
     
     
@@ -381,17 +389,17 @@ public class ThreadClient extends Thread {
         { System.err.println("Erreur Serveur Cartes ! Pas de connexion ? [" + e + "]");
         }
     }
-    private RequeteCHECKINAP RecevoirRequete(Socket s) {
-        RequeteCHECKINAP rep = null;
+    private Requete RecevoirRequete(Socket s) {
+        Requete rep = null;
         System.out.println("SERVER | Reception requete "); 
         if(s == null)
            System.out.println("socket null ");  
         try
         {
             ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-            rep = (RequeteCHECKINAP)ois.readObject();
+            rep = (Requete)ois.readObject();
             System.out.println("SERVER | Reponse reçue : " + rep.getChargeUtile());
-            System.out.println("SERVER | Type : " + rep.type);
+            System.out.println("SERVER | Type : " + rep.getCode());
             chargeUtile = rep.getChargeUtile();
         }
         catch (ClassNotFoundException e)

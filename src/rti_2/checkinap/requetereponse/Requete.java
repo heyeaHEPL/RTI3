@@ -15,4 +15,7 @@ public interface Requete {
     
     public Runnable createRunnable(Socket s, ConsoleServeur cs);
     
+    public int getCode();
+    public String getChargeUtile();
+    public void requeteStart(Socket s);
 }
